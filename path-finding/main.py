@@ -364,7 +364,6 @@ def main(window, width):
     matrix = create_matrix(ROWS, width)
     start_position = None
     end_position = None
-    is_started = False
     is_running = True
     while is_running:
         # Desenha a tela cada mudança de estado
@@ -375,10 +374,6 @@ def main(window, width):
             # Finalizar jogo
             if event.type == pygame.QUIT:
                 is_running = False
-
-            # Impedir interação do usuário após inicio
-            if is_started:
-                continue
 
             # get_pressed()[0] -> BOTAO ESQUERDO DO MOUSE
             if pygame.mouse.get_pressed()[0]:
@@ -416,7 +411,7 @@ def main(window, width):
 
             # Inicializar jogo, rodar algoritmo
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and not is_started:
+                if event.key == pygame.K_SPACE and start_position and end_position:
                     for row in matrix:
                         for point in row:
                             # Todos pontos vizinhos
@@ -429,6 +424,12 @@ def main(window, width):
                         start_position,
                         end_position
                     )
+
+                # Recriar tela após execução
+                if event.key == pygame.K_BACKSPACE:
+                    start_position = None
+                    end_position = None
+                    matrix = create_matrix(ROWS, width)
 
     pygame.quit()  # Fechar a janela
 
