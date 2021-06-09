@@ -203,6 +203,13 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
     g[start_pos] = 0
     f = {point: float("inf") for row in matrix for point in row}
     f[start_pos] = h1(start_pos.get_position(), end_pos.get_position())
+    #[Substituir? ] f[start_pos] = g[start_pos] + h1(start_pos.get_position(), end_pos.get_position())
+    print('Custo real: ', end="")
+    print(g[start_pos], end="  ")
+    print('Heuristica: ', end="")
+    print(h1(start_pos.get_position(), end_pos.get_position()), end="  ")
+    print('Função de ativação: ', end ="")
+    print(f[start_pos]) 
 
     open_set_hash = {start_pos}
 
@@ -227,8 +234,13 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
             if temp_g < g[nearby_point]:
                 backtracking_path[nearby_point] = current
                 g[nearby_point] = temp_g
-                f[nearby_point] = temp_g + \
-                    h1(nearby_point.get_position(), end_pos.get_position())
+                print('Custo real: ', end="")
+                print(temp_g, end="  ")
+                print('Heuristica: ', end="")
+                print(h1(nearby_point.get_position(), end_pos.get_position()), end="  ")
+                f[nearby_point] = temp_g + h1(nearby_point.get_position(), end_pos.get_position())
+                print('Função de ativação: ',end ="")
+                print(f[nearby_point]) 
                 if nearby_point not in open_set_hash:
                     count += 1
                     open_set.put((f[nearby_point], count, nearby_point))
