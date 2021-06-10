@@ -40,8 +40,6 @@ pygame.display.set_caption('A(star) - Path Finding')
 # -----------------------------------------------------------------------
 # CLASSE PONTO
 # -----------------------------------------------------------------------
-
-
 """
 Classe utilizada para gerar cada um dos 'quadradinhos' ou 'nós' do grafo.
 """
@@ -118,7 +116,6 @@ class Point:
 
     def get_heuristic(self):
         return self.h
-    # Métodos
 
     def draw(self, window):
         '''
@@ -185,14 +182,23 @@ def manhattan(p1, p2):
     x2, y2 = p2
     return abs(x1 - x2) + abs(y1 - y2)
 
-# Others -> Admissível / Inadimissível
 
-
+# Inadmissível
 def inadmissible_heuristics(p1, p2):
+    '''
+    Heurística 03: Calculo totalmente foido inventado por nós para gerar uma heurística não admissível.
+
+    Parâmetros:
+        p1 (Point): ponto inicial, de onde quer sair.
+        p2 (Point): ponto final, para onde quer ir.
+
+    Retorno:
+        int: distância inventada entre p1 e p2.
+    '''
     x1, y1 = p1
     x2, y2 = p2
 
-    return abs(x1 - y2 - x1 * x1 * y1 + x2)
+    return abs(y2 ** y2 - x1 ** y1 + x2)
 
 # -----------------------------------------------------------------------
 # A STAR
@@ -416,7 +422,7 @@ def main(window, width):
                 elif point != start_position and point != end_position:
                     point.set_obstacle()
 
-            # get_pressed()[1] -> BOTAO DIREITO DO MOUSE
+            # get_pressed()[2] -> BOTAO DIREITO DO MOUSE
             elif pygame.mouse.get_pressed()[2]:
                 # Obter posicao do mouse e mapear na matriz
                 mouse_position = pygame.mouse.get_pos()
@@ -438,18 +444,18 @@ def main(window, width):
                         for point in row:
                             # Todos pontos vizinhos
                             point.update_nearby_points(matrix)
-                            point.set_h_manhanttan(end_position)
-                            # point.set_h_inadmissible(end_position) 
+                            # point.set_h_manhanttan(end_position)
+                            point.set_h_inadmissible(end_position)
 
                     # Iniciar algoritmo
                     a_start_path_finding(
                         lambda: redraw_screen(window, matrix, ROWS, width),
                         matrix,
                         start_position,
-                        end_position
+                        end_position,
                     )
 
-                # Recriar tela após execução
+                # Limpar tela após execução
                 if event.key == pygame.K_BACKSPACE:
                     start_position = None
                     end_position = None
