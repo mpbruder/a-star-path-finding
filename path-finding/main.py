@@ -110,6 +110,9 @@ class Point:
     def set_h_manhanttan(self, end_pos):
         self.h = manhattan(self.get_position(), end_pos.get_position())
 
+    def set_h_chebyshev(self, end_pos):
+        self.h = chebyshev(self.get_position(), end_pos.get_position())
+
     def set_h_inadmissible(self, end_pos):
         self.h = inadmissible_heuristics(
             self.get_position(), end_pos.get_position())
@@ -183,10 +186,27 @@ def manhattan(p1, p2):
     return abs(x1 - x2) + abs(y1 - y2)
 
 
+# Chebyshev -> Admissível
+def chebyshev(p1, p2):
+    '''
+    Heurística 02: Chebyshev. Retona a maior entre as diferenças de X e Y de dois pontos.
+
+    Parâmetros:
+        p1 (Point): ponto inicial, de onde quer sair.
+        p2 (Point): ponto final, para onde quer ir.
+
+    Retorno:
+        int: distância 'Chebyshev' entre p1 e p2.
+    '''
+    x1, y1 = p1
+    x2, y2 = p2
+    return max(abs(x1 - x2), abs(y1 - y2))
+
+
 # Inadmissível
 def inadmissible_heuristics(p1, p2):
     '''
-    Heurística 03: Calculo totalmente foido inventado por nós para gerar uma heurística não admissível.
+    Heurística 03: Calculo totalmente doido inventado por nós para gerar uma heurística não admissível.
 
     Parâmetros:
         p1 (Point): ponto inicial, de onde quer sair.
@@ -198,7 +218,7 @@ def inadmissible_heuristics(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
 
-    return abs(y2 ** y2 - x1 ** y1 + x2)
+    return abs(x1 - y1) * abs(y2 + x2) - abs(x2 - y1) * abs(y1 + x2)
 
 # -----------------------------------------------------------------------
 # A STAR
@@ -220,7 +240,7 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
         end_pos (Point): ponto final, no qual pretende-se chegar.
     '''
     count = 0
-    backtracking_path = {}
+    path = {}
 
     # Estrutura de dados dos nós abertos e visitados
     open_list_queue = PriorityQueue()  # Retorna sempre o menor elemento da fila
@@ -242,7 +262,7 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
 
         # Desenhar melhor caminho
         if current == end_pos:
-            great_way(backtracking_path, end_pos, redraw_screen)
+            great_way(path, end_pos, redraw_screen)
             end_pos.set_end()
             start_pos.set_start()
             return True
@@ -251,7 +271,7 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
             temp_g = g[current] + 1
 
             if temp_g < g[nearby_point]:
-                backtracking_path[nearby_point] = current
+                path[nearby_point] = current
                 g[nearby_point] = temp_g
                 # Atualizar f para tomar decisão
                 f[nearby_point] = temp_g + nearby_point.get_heuristic()
@@ -366,18 +386,18 @@ def get_clicked_mouse_position(mouse_position, rows, width):
     return row, col
 
 
-def great_way(backtracking_path, current, redraw_screen):
+def great_way(path, current, redraw_screen):
     '''
     Desenha na tela o melhor caminho após o algoritmo ter encontrado uma solução.
     Somente será o melhor caminho caso a heurística escolhida seja admissível.
 
     Parâmetros:
-        backtracking_path(dict): dicionário com todos o nós do melhor caminho. 
+        path(dict): dicionário com todos o nós do melhor caminho. 
         current(Point): ponto atual, o destino.
         redraw_screen(function): função que redesenha a tela.
     '''
-    while current in backtracking_path:
-        current = backtracking_path[current]
+    while current in path:
+        current = path[current]
         current.set_path()
         redraw_screen()
 
@@ -445,6 +465,7 @@ def main(window, width):
                             # Todos pontos vizinhos
                             point.update_nearby_points(matrix)
                             # point.set_h_manhanttan(end_position)
+                            # point.set_h_chebyshev(end_position)
                             point.set_h_inadmissible(end_position)
 
                     # Iniciar algoritmo
