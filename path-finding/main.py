@@ -253,6 +253,17 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
     g[start_pos] = 0
     f = {point: float("inf") for row in matrix for point in row}
 
+    f[start_pos] = h1(start_pos.get_position(), end_pos.get_position())
+    #[Substituir? ] f[start_pos] = g[start_pos] + h1(start_pos.get_position(), end_pos.get_position())
+    print('Custo real: ', end="")
+    print(g[start_pos], end="  ")
+    print('Heuristica: ', end="")
+    print(h1(start_pos.get_position(), end_pos.get_position()), end="  ")
+    print('Função de ativação: ', end ="")
+    print(f[start_pos]) 
+
+
+
     while not open_list_queue.empty():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -273,9 +284,15 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
             if temp_g < g[nearby_point]:
                 path[nearby_point] = current
                 g[nearby_point] = temp_g
-                # Atualizar f para tomar decisão
+                print('Custo real: ', end="")
+                print(temp_g, end="  ")
+                print('Heuristica: ', end="")
+                print(h1(nearby_point.get_position(), end_pos.get_position()), end="  ")
                 f[nearby_point] = temp_g + nearby_point.get_heuristic()
+                print('Função de ativação: ',end ="")
+                print(f[nearby_point]) 
                 if nearby_point not in open_list and nearby_point not in closed_list:
+
                     count += 1
                     open_list_queue.put((f[nearby_point], count, nearby_point))
                     open_list.add(nearby_point)
@@ -490,3 +507,4 @@ def main(window, width):
 # -----------------------------------------------------------------------
 
 main(window=WINDOW, width=WIDTH)
+
