@@ -1,5 +1,6 @@
 import pygame
 from queue import PriorityQueue
+import math, scipy
 
 """
 Path Finding
@@ -173,7 +174,44 @@ def h1(p1, p2):
     x2, y2 = p2
     return abs(x1 - x2) + abs(y1 - y2)
 
-# Others -> Admissível / Inadimissível
+# Euclidiana -> Inadimissível
+def h2(p1, p2):
+    '''
+    Heurística 02: Euclidiana. Será utilizada a distância euclidiana como 
+    uma das heurísticas inadimissível.
+    
+    distancia: sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)))
+
+    Parâmetros:
+        p1 (Point): ponto inicial, de onde quer sair.
+        p2 (Point): ponto final, para onde quer ir.
+
+    Retorno:
+         int: distância 'Euclidiana' entre p1 e p2.
+         
+    '''
+    dst = math.dst(p1, p2)
+
+    return dst
+
+# Minkowski -> Inadimissível
+def h3(p1, p2):
+    '''
+    Heurística 03: Minkowski. Será utilizada a distância de Minkowski como 
+    uma das heurísticas inadimissível.
+
+    Parâmetros:
+        p1 (Point): ponto inicial, de onde quer sair.
+        p2 (Point): ponto final, para onde quer ir.
+
+    Retorno:
+         int: distância 'Minkowski' entre p1 e p2.
+    '''
+
+    dst = scipy.spatial.distance.minkowski(p1,p2)
+    return dst
+
+# Obs: colocar menu de distâncias
 
 
 # -----------------------------------------------------------------------
