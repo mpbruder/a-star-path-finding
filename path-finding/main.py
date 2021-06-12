@@ -271,7 +271,7 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
             temp_g = g[current] + 1
 
             if temp_g < g[nearby_point]:
-                path[nearby_point] = current
+                path[nearby_point] = current, temp_g
                 g[nearby_point] = temp_g
                 # Atualizar f para tomar decisão
                 f[nearby_point] = temp_g + nearby_point.get_heuristic()
@@ -397,8 +397,15 @@ def great_way(path, current, redraw_screen):
         redraw_screen(function): função que redesenha a tela.
     '''
     while current in path:
-        current = path[current]
-        current.set_path()
+        info = path[current]
+        
+        info[0].set_path()
+        print(
+            f'HEURISTICA DO PONTO {info[0].get_position()}: {info[0].get_heuristic()}')
+        print(
+            f'VALOR DE G DO PONTO {info[0].get_position()}: {info[1]}')
+        print(f'F(n) = ')
+
         redraw_screen()
 
 # -----------------------------------------------------------------------
@@ -408,7 +415,7 @@ def great_way(path, current, redraw_screen):
 
 def main(window, width):
     # Parâmetros iniciais
-    ROWS = 50
+    ROWS = 4
     matrix = create_matrix(ROWS, width)
     start_position = None
     end_position = None
@@ -464,9 +471,9 @@ def main(window, width):
                         for point in row:
                             # Todos pontos vizinhos
                             point.update_nearby_points(matrix)
-                            # point.set_h_manhanttan(end_position)
+                            point.set_h_manhanttan(end_position)
                             # point.set_h_chebyshev(end_position)
-                            point.set_h_inadmissible(end_position)
+                            # point.set_h_inadmissible(end_position)
 
                     # Iniciar algoritmo
                     a_start_path_finding(
