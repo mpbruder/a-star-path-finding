@@ -222,7 +222,7 @@ def euclidean(p1, p2):
     Heurística 02: Euclidiana. Será utilizada a distância euclidiana como 
     uma das heurísticas inadimissível.
     
-    distancia: sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)))
+    distancia: sqrt(((x2 - y1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)))
 
     Parâmetros:
         p1 (Point): ponto inicial, de onde quer sair.
@@ -253,6 +253,14 @@ def minkowski(p1, p2):
     dst = scipy.spatial.distance.minkowski(p1,p2)
     return dst
 
+def is_adimissible(real_distance,heuristc_distance):
+    # Admissível: Quando custo real ultrapassa o da heurística
+    if(real_distance > heuristc_distance):
+        return 1
+    else:
+        return 0
+
+    
 # -----------------------------------------------------------------------
 # A STAR
 # -----------------------------------------------------------------------
