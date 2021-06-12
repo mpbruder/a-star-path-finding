@@ -40,8 +40,6 @@ pygame.display.set_caption('A(star) - Path Finding')
 # -----------------------------------------------------------------------
 # CLASSE PONTO
 # -----------------------------------------------------------------------
-
-
 """
 Classe utilizada para gerar cada um dos 'quadradinhos' ou 'nós' do grafo.
 """
@@ -63,7 +61,10 @@ class Point:
         self.color = WHITE
 
         # Pontos vizinhos
-        self.nearby = []
+        self.nearby_points = []
+
+        # heuristica de cada ponto
+        self.h = 0
 
     # Getters & Setters
 
@@ -98,15 +99,26 @@ class Point:
         self.color = BLACK
 
     def set_start(self):
-        self.color = BLUE
+        self.color = YELLOW
 
     def set_end(self):
-        self.color = YELLOW
+        self.color = BLUE
 
     def set_path(self):
         self.color = LIGHT_GREEN
 
-    # Métodos
+    def set_h_manhanttan(self, end_pos):
+        self.h = manhattan(self.get_position(), end_pos.get_position())
+
+    def set_h_chebyshev(self, end_pos):
+        self.h = chebyshev(self.get_position(), end_pos.get_position())
+
+    def set_h_inadmissible(self, end_pos):
+        self.h = inadmissible_heuristics(
+            self.get_position(), end_pos.get_position())
+
+    def get_heuristic(self):
+        return self.h
 
     def draw(self, window):
         '''
@@ -129,24 +141,24 @@ class Point:
         Parâmetro:
             matrix (list): lista de listas.
         '''
-        self.nearby = []
+        self.nearby_points = []
         # O ponto de baixo existe? Ele é um obstaculo?
         # DOWN
         if self.row < self.total_rows - 1 and not matrix[self.row + 1][self.col].is_obstacle():
-            self.nearby.append(matrix[self.row + 1][self.col])
+            self.nearby_points.append(matrix[self.row + 1][self.col])
         # O ponto de cima existe? Ele é um obstaculo?
         # UP
         # -1 pois Y cresce inversamente
         if self.row > 0 and not matrix[self.row - 1][self.col].is_obstacle():
-            self.nearby.append(matrix[self.row - 1][self.col])
+            self.nearby_points.append(matrix[self.row - 1][self.col])
         # O ponto da direita existe? Ele é um obstaculo?
         # RIGHT
         if self.col < self.total_rows - 1 and not matrix[self.row][self.col + 1].is_obstacle():
-            self.nearby.append(matrix[self.row][self.col + 1])
+            self.nearby_points.append(matrix[self.row][self.col + 1])
         # O ponto da esquerda existe? Ele é um obstaculo?
         # LEFT
         if self.col > 0 and not matrix[self.row][self.col - 1].is_obstacle():
-            self.nearby.append(matrix[self.row][self.col - 1])
+            self.nearby_points.append(matrix[self.row][self.col - 1])
 
     def __lt__(self, other):
         return False
@@ -157,7 +169,7 @@ class Point:
 # -----------------------------------------------------------------------
 
 # Manhattan -> Admissível
-def h1(p1, p2):
+def manhattan(p1, p2):
     '''
     Heurística 01: Manhattan. Será utilizada a distância de Manhattan como 
     uma das heurísticas adimissíveis.
@@ -173,12 +185,46 @@ def h1(p1, p2):
     x2, y2 = p2
     return abs(x1 - x2) + abs(y1 - y2)
 
-# Others -> Admissível / Inadimissível
 
+# Chebyshev -> Admissível
+def chebyshev(p1, p2):
+    '''
+    Heurística 02: Chebyshev. Retona a maior entre as diferenças de X e Y de dois pontos.
+
+    Parâmetros:
+        p1 (Point): ponto inicial, de onde quer sair.
+        p2 (Point): ponto final, para onde quer ir.
+
+    Retorno:
+        int: distância 'Chebyshev' entre p1 e p2.
+    '''
+    x1, y1 = p1
+    x2, y2 = p2
+    return max(abs(x1 - x2), abs(y1 - y2))
+
+
+# Inadmissível
+def inadmissible_heuristics(p1, p2):
+    '''
+    Heurística 03: Calculo totalmente doido inventado por nós para gerar uma heurística não admissível.
+
+    Parâmetros:
+        p1 (Point): ponto inicial, de onde quer sair.
+        p2 (Point): ponto final, para onde quer ir.
+
+    Retorno:
+        int: distância inventada entre p1 e p2.
+    '''
+    x1, y1 = p1
+    x2, y2 = p2
+
+    return abs(x1 - y1) * abs(y2 + x2) - abs(x2 - y1) * abs(y1 + x2)
 
 # -----------------------------------------------------------------------
 # A STAR
 # -----------------------------------------------------------------------
+
+
 def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
     '''
     Função mais importante do projeto. É aqui que o algoritmo A* é definido, 
@@ -194,14 +240,19 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
         end_pos (Point): ponto final, no qual pretende-se chegar.
     '''
     count = 0
-    open_set = PriorityQueue()  # Retorna sempre o menor elemento da fila
-    open_set.put((0, count, start_pos))
-    backtracking_path = {}
+    path = {}
 
-    # Parametros para função de avaliação
+    # Estrutura de dados dos nós abertos e visitados
+    open_list_queue = PriorityQueue()  # Retorna sempre o menor elemento da fila
+    open_list_queue.put((0, count, start_pos))
+    open_list = {start_pos}
+    closed_list = set()
+
+    # Parâmetros para função de avaliação
     g = {point: float("inf") for row in matrix for point in row}
     g[start_pos] = 0
     f = {point: float("inf") for row in matrix for point in row}
+
     f[start_pos] = h1(start_pos.get_position(), end_pos.get_position())
     #[Substituir? ] f[start_pos] = g[start_pos] + h1(start_pos.get_position(), end_pos.get_position())
     print('Custo real: ', end="")
@@ -211,45 +262,47 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
     print('Função de ativação: ', end ="")
     print(f[start_pos]) 
 
-    open_set_hash = {start_pos}
 
-    while not open_set.empty():
+
+    while not open_list_queue.empty():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
 
-        current = open_set.get()[2]
-        open_set_hash.remove(current)
+        current = open_list_queue.get()[2]
 
         # Desenhar melhor caminho
         if current == end_pos:
-            great_way(backtracking_path, end_pos, redraw_screen)
+            great_way(path, end_pos, redraw_screen)
             end_pos.set_end()
             start_pos.set_start()
             return True
 
-        for nearby_point in current.nearby:
+        for nearby_point in current.nearby_points:
             temp_g = g[current] + 1
 
             if temp_g < g[nearby_point]:
-                backtracking_path[nearby_point] = current
+                path[nearby_point] = current
                 g[nearby_point] = temp_g
                 print('Custo real: ', end="")
                 print(temp_g, end="  ")
                 print('Heuristica: ', end="")
                 print(h1(nearby_point.get_position(), end_pos.get_position()), end="  ")
-                f[nearby_point] = temp_g + h1(nearby_point.get_position(), end_pos.get_position())
+                f[nearby_point] = temp_g + nearby_point.get_heuristic()
                 print('Função de ativação: ',end ="")
                 print(f[nearby_point]) 
-                if nearby_point not in open_set_hash:
+                if nearby_point not in open_list and nearby_point not in closed_list:
+
                     count += 1
-                    open_set.put((f[nearby_point], count, nearby_point))
-                    open_set_hash.add(nearby_point)
+                    open_list_queue.put((f[nearby_point], count, nearby_point))
+                    open_list.add(nearby_point)
                     nearby_point.set_open()
 
         redraw_screen()
 
         if current != start_pos:
+            open_list.remove(current)
+            closed_list.add(current)
             current.set_close()
 
     return False
@@ -350,18 +403,18 @@ def get_clicked_mouse_position(mouse_position, rows, width):
     return row, col
 
 
-def great_way(backtracking_path, current, redraw_screen):
+def great_way(path, current, redraw_screen):
     '''
     Desenha na tela o melhor caminho após o algoritmo ter encontrado uma solução.
     Somente será o melhor caminho caso a heurística escolhida seja admissível.
 
     Parâmetros:
-        backtracking_path(dict): dicionário com todos o nós do melhor caminho. 
+        path(dict): dicionário com todos o nós do melhor caminho. 
         current(Point): ponto atual, o destino.
         redraw_screen(function): função que redesenha a tela.
     '''
-    while current in backtracking_path:
-        current = backtracking_path[current]
+    while current in path:
+        current = path[current]
         current.set_path()
         redraw_screen()
 
@@ -406,7 +459,7 @@ def main(window, width):
                 elif point != start_position and point != end_position:
                     point.set_obstacle()
 
-            # get_pressed()[1] -> BOTAO DIREITO DO MOUSE
+            # get_pressed()[2] -> BOTAO DIREITO DO MOUSE
             elif pygame.mouse.get_pressed()[2]:
                 # Obter posicao do mouse e mapear na matriz
                 mouse_position = pygame.mouse.get_pos()
@@ -428,16 +481,19 @@ def main(window, width):
                         for point in row:
                             # Todos pontos vizinhos
                             point.update_nearby_points(matrix)
+                            # point.set_h_manhanttan(end_position)
+                            # point.set_h_chebyshev(end_position)
+                            point.set_h_inadmissible(end_position)
 
                     # Iniciar algoritmo
                     a_start_path_finding(
                         lambda: redraw_screen(window, matrix, ROWS, width),
                         matrix,
                         start_position,
-                        end_position
+                        end_position,
                     )
 
-                # Recriar tela após execução
+                # Limpar tela após execução
                 if event.key == pygame.K_BACKSPACE:
                     start_position = None
                     end_position = None
