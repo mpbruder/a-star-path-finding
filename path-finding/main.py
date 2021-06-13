@@ -65,6 +65,7 @@ class Point:
 
         # heuristica de cada ponto
         self.h = 0
+        self.g = 0
 
     # Getters & Setters
 
@@ -117,8 +118,14 @@ class Point:
         self.h = inadmissible_heuristics(
             self.get_position(), end_pos.get_position())
 
+    def set_g(self, valor):
+        self.g = valor
+
     def get_heuristic(self):
         return self.h
+
+    def get_g(self):
+        return self.g
 
     def draw(self, window):
         '''
@@ -163,12 +170,16 @@ class Point:
     def __lt__(self, other):
         return False
 
+    def __str__(self):
+        return str(self.get_position())
 
 # -----------------------------------------------------------------------
 # HEURÍSTICAS
 # -----------------------------------------------------------------------
 
 # Manhattan -> Admissível
+
+
 def manhattan(p1, p2):
     '''
     Heurística 01: Manhattan. Será utilizada a distância de Manhattan como 
@@ -259,9 +270,12 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
                 pygame.quit()
 
         current = open_list_queue.get()[2]
+        current.set_g(g[current])
 
         # Desenhar melhor caminho
         if current == end_pos:
+            print(f'CUSTO REAL = {end_pos.get_g()}')
+            # Enviar listas por parametros
             great_way(path, end_pos, redraw_screen)
             end_pos.set_end()
             start_pos.set_start()
@@ -271,10 +285,11 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
             temp_g = g[current] + 1
 
             if temp_g < g[nearby_point]:
-                path[nearby_point] = current, temp_g
+                path[nearby_point] = current
                 g[nearby_point] = temp_g
                 # Atualizar f para tomar decisão
                 f[nearby_point] = temp_g + nearby_point.get_heuristic()
+                # print(f[nearby_point])
                 if nearby_point not in open_list and nearby_point not in closed_list:
                     count += 1
                     open_list_queue.put((f[nearby_point], count, nearby_point))
@@ -288,6 +303,17 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
             closed_list.add(current)
             current.set_close()
 
+        print(f'LISTA ABERTA')
+        for item in open_list:
+            print(item, end=" ")
+        print()
+
+        print(f'LISTA FECHADA')
+        for item in closed_list:
+            print(item, end=" ")
+        print()
+
+    print()
     return False
 
 # -----------------------------------------------------------------------
@@ -396,15 +422,15 @@ def great_way(path, current, redraw_screen):
         current(Point): ponto atual, o destino.
         redraw_screen(function): função que redesenha a tela.
     '''
+    print(
+        f'Ponto: {current.get_position()} G:  {current.get_g()}  H: {current.get_heuristic()} | F = {current.get_g() + current.get_heuristic()}',  end="  ")
+    print()
     while current in path:
-        info = path[current]
-        
-        info[0].set_path()
+        current.set_path()
+        current = path[current]
+        redraw_screen()
         print(
-            f'HEURISTICA DO PONTO {info[0].get_position()}: {info[0].get_heuristic()}')
-        print(
-            f'VALOR DE G DO PONTO {info[0].get_position()}: {info[1]}')
-        print(f'F(n) = ')
+            f'Ponto: {current.get_position()} G:  {current.get_g()}  H: {current.get_heuristic()} | F = {current.get_g() + current.get_heuristic()}')
 
         redraw_screen()
 
@@ -415,7 +441,7 @@ def great_way(path, current, redraw_screen):
 
 def main(window, width):
     # Parâmetros iniciais
-    ROWS = 4
+    ROWS = 5
     matrix = create_matrix(ROWS, width)
     start_position = None
     end_position = None
@@ -471,8 +497,8 @@ def main(window, width):
                         for point in row:
                             # Todos pontos vizinhos
                             point.update_nearby_points(matrix)
-                            point.set_h_manhanttan(end_position)
-                            # point.set_h_chebyshev(end_position)
+                            # point.set_h_manhanttan(end_position)
+                            point.set_h_chebyshev(end_position)
                             # point.set_h_inadmissible(end_position)
 
                     # Iniciar algoritmo
