@@ -296,11 +296,11 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
                     nearby_point.set_open()
 
         redraw_screen()
-
-        if current != start_pos:
-            open_list.remove(current)
-            closed_list.add(current)
-            current.set_close()
+        
+        # Alteracoes de estado
+        open_list.remove(current)
+        closed_list.add(current)
+        current.set_close()
 
         print(f'LISTA ABERTA')
         for item in open_list:
@@ -310,9 +310,8 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
         print(f'LISTA FECHADA')
         for item in closed_list:
             print(item, end=" ")
-        print()
+        print('', end='\n\n\n')
 
-    print()
     return False
 
 # -----------------------------------------------------------------------
@@ -421,6 +420,7 @@ def great_way(path, current, redraw_screen):
         current(Point): ponto atual, o destino.
         redraw_screen(function): função que redesenha a tela.
     '''
+    print(f'CAMINHO ESCOLHIDO')
     print(
         f'Ponto: {current.get_position()} G:  {current.get_g()}  H: {current.get_heuristic()} | F = {current.get_g() + current.get_heuristic()}',  end="  ")
     print()
