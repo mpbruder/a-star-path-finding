@@ -114,9 +114,10 @@ class Point:
     def set_h_chebyshev(self, end_pos):
         self.h = chebyshev(self.get_position(), end_pos.get_position())
 
-    def set_h_inadmissible(self, end_pos):
-        self.h = inadmissible_heuristics(
+    def set_h_inadmissible(self, end_pos, obs):
+        h = inadmissible_heuristics(
             self.get_position(), end_pos.get_position())
+        self.h = abs(h + obs)
 
     def set_g(self, valor):
         self.g = valor
@@ -217,7 +218,7 @@ def chebyshev(p1, p2):
 # Inadmissível
 def inadmissible_heuristics(p1, p2):
     '''
-    Heurística 03: Calculo totalmente doido inventado por nós para gerar uma heurística não admissível.
+    Heurística 03: .
 
     Parâmetros:
         p1 (Point): ponto inicial, de onde quer sair.
@@ -226,10 +227,8 @@ def inadmissible_heuristics(p1, p2):
     Retorno:
         int: distância inventada entre p1 e p2.
     '''
-    x1, y1 = p1
-    x2, y2 = p2
 
-    return abs(x1 - y1) * abs(y2 + x2) - abs(x2 - y1) * abs(y1 + x2)
+    return manhattan(p1, p2) * chebyshev(p1, p2)
 
 # -----------------------------------------------------------------------
 # A STAR
@@ -441,7 +440,7 @@ def great_way(path, current, redraw_screen):
 
 def main(window, width):
     # Parâmetros iniciais
-    ROWS = 5
+    ROWS = 20
     matrix = create_matrix(ROWS, width)
     start_position = None
     end_position = None
@@ -490,6 +489,13 @@ def main(window, width):
                 elif point == end_position:
                     end_position = None
 
+            # Total de obstaculos
+            obstacles = 0
+            for row in matrix:
+                for point in row:
+                    if point.is_obstacle():
+                        obstacles += 1
+
             # Inicializar jogo, rodar algoritmo
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and start_position and end_position:
@@ -498,8 +504,8 @@ def main(window, width):
                             # Todos pontos vizinhos
                             point.update_nearby_points(matrix)
                             # point.set_h_manhanttan(end_position)
-                            point.set_h_chebyshev(end_position)
-                            # point.set_h_inadmissible(end_position)
+                            # point.set_h_chebyshev(end_position)
+                            point.set_h_inadmissible(end_position, obstacles)
 
                     # Iniciar algoritmo
                     a_start_path_finding(
