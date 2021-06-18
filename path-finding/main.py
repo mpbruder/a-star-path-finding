@@ -218,14 +218,14 @@ def chebyshev(p1, p2):
 # Inadmissível
 def inadmissible_heuristics(p1, p2):
     '''
-    Heurística 03: .
+    Heurística 03: Multiplica a distância de manhattan pela distância de chebyshev.
 
     Parâmetros:
         p1 (Point): ponto inicial, de onde quer sair.
         p2 (Point): ponto final, para onde quer ir.
 
     Retorno:
-        int: distância inventada entre p1 e p2.
+        int: distância "inventada" entre p1 e p2.
     '''
 
     return manhattan(p1, p2) * chebyshev(p1, p2)
@@ -296,7 +296,7 @@ def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
                     nearby_point.set_open()
 
         redraw_screen()
-        
+
         # Alteracoes de estado
         open_list.remove(current)
         closed_list.add(current)
@@ -489,7 +489,7 @@ def main(window, width):
                 elif point == end_position:
                     end_position = None
 
-            # Total de obstaculos
+            # Total de obstaculos (usado na heurística inadmissível)
             obstacles = 0
             for row in matrix:
                 for point in row:
