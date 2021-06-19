@@ -529,6 +529,8 @@ def main(janela, largura):
                 pos_mouse = pygame.mouse.get_pos()
                 linha, coluna = get_mouse_pos(
                     pos_mouse, NUM_LINHAS, largura // 2)
+                if linha >= NUM_LINHAS or coluna >= NUM_LINHAS:
+                    break
                 ponto = matriz[linha][coluna]
 
                 # Define a posição inicial:
@@ -551,6 +553,8 @@ def main(janela, largura):
                 pos_mouse = pygame.mouse.get_pos()
                 linha, coluna = get_mouse_pos(
                     pos_mouse, NUM_LINHAS, largura // 2)
+                if linha >= NUM_LINHAS or coluna >= NUM_LINHAS:
+                    break
                 ponto = matriz[linha][coluna]
                 ponto.set_vazio()
 
