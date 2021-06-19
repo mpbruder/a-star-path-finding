@@ -62,7 +62,7 @@ deslocamento_x_arvore = 900
 # -----------------------------------------------------------------------
 # CLASSE PARA CADA UM DOS NÓS DISPOSTOS NA TELA
 # -----------------------------------------------------------------------
-class Node:
+class Ponto:
     """
     Classe utilizada para gerar cada um dos 'quadradinhos' ou 'nós' do grafo.
     """
@@ -371,9 +371,9 @@ def criar_matriz(qtd_linhas, largura):
         matriz.append([])
         for coluna in range(qtd_linhas):
             # Criação de um novo nó:
-            node = Node(linha=linha, coluna=coluna, 
+            ponto = Ponto(linha=linha, coluna=coluna, 
                         largura=margem, qtd_linhas=qtd_linhas)
-            matriz[linha].append(node)
+            matriz[linha].append(ponto)
 
     return matriz
 
@@ -580,9 +580,9 @@ def main(janela, largura):
                             ponto.atualizar_pontos_vizinhos(matriz)
                             
                             # Descomente uma das três heurísticas abaixo:
-                            # point.set_h_manhanttan(pos_final)
-                            # point.set_h_chebyshev(pos_final)
-                            ponto.set_h_inadmissivel(pos_final, obstaculos)
+                            ponto.set_h_manhanttan(pos_final)
+                            # ponto.set_h_chebyshev(pos_final)
+                            # ponto.set_h_inadmissivel(pos_final, obstaculos)
 
                     # Inicia o algoritmo A*:
                     buscar_caminhos_a_estrela(
