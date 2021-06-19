@@ -248,7 +248,7 @@ def heuristica_inadmissivel(p1, p2): # -> Inadmissível
 # -----------------------------------------------------------------------
 # Buscador de Caminhos com A*
 # -----------------------------------------------------------------------
-def buscar_caminhos_a_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
+def busca_A_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
     '''
     Função central do projeto. É aqui que o algoritmo A* é definido, 
     todas as estruturas de dados são modificadas e a melhor decisão é tomada 
@@ -585,7 +585,7 @@ def main(janela, largura):
                             # ponto.set_h_inadmissivel(pos_final, obstaculos)
 
                     # Inicia o algoritmo A*:
-                    buscar_caminhos_a_estrela(
+                    busca_A_estrela(
                         lambda: redesenhar_tela(janela, matriz, NUM_LINHAS, largura // 2),
                         matriz,
                         pos_inicial,
