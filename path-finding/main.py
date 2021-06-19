@@ -3,181 +3,216 @@ from queue import PriorityQueue
 
 """
 Path Finding
-
-É um programa em python desenvolvido durante a disciplina de Inteligência Artificial
-da Faculdade de Tecnologia da Unicamp pelos alunos:
+É um programa em python desenvolvido durante a disciplina de 
+Inteligência Artificial da Faculdade de Tecnologia da Unicamp pelos alunos:
     1. Kevin Barrios
     2. Larissa Benevides
     3. Matheus Alves
     4. Matheus Bruder
     5. Miguel Amaral
-
-O Objetivo deste programa é simular visualmente o cada uma das decisões tomadas em uma 
-busca utilizando o algoritmo A*. Além disso, utilizamos tanto heurísticas admissíveis,
-como heurísticas inadmissíveis para poder comparar os resultados.
+O Objetivo deste programa é simular visualmente cada uma das decisões tomadas 
+em uma busca utilizando o algoritmo A*. Além disso, utilizamos tanto de
+heurísticas admissíveis, como heurísticas inadmissíveis 
+para poder comparar os resultados.
 """
 
+# -----------------------------------------------------------------------
+# CONFIGURAÇÕES GERAIS
+# -----------------------------------------------------------------------
+
+# Cada estado de um Nó é representado por uma cor:
+ESTADOS = {
+    'vazio': (255, 255, 255),  # Branco
+    'fechado': (237, 0, 38, 0.5),  # Vermelho
+    'aberto': (0, 101, 68),  # Verde
+    'inicio': (120, 199, 235),  # Azul
+    'fim': (253, 194, 0),  # Amarelo
+    'obstaculo': (0, 0, 0),  # Preto
+    'caminho': (204, 225, 0),  # Verde Claro
+}
+
+# Dimensões:
+LARGURA = 1600
+ALTURA = 800
+JANELA = pygame.display.set_mode((LARGURA, ALTURA))  # Tamanho da janela
+pygame.display.set_caption('Buscador de caminhos com A*')  # Título da janela
+
+# Definições para escrita de texto na tela do jogo:
+pygame.font.init()
+font_titulo = pygame.font.Font(pygame.font.get_default_font(), 30)
+font = pygame.font.Font(pygame.font.get_default_font(), 12)
+font_aviso = pygame.font.Font(pygame.font.get_default_font(), 15)
+COR_FONTE = (255, 255, 255)
+
+# Definição dos títulos textuais dentro da tela:
+cabecalho_arvore_busca = font_titulo.render('Árvore de Busca', True, COR_FONTE)
+cabecalho_lista_abertos = font_titulo.render(
+    'Lista de nós abertos', True, COR_FONTE)
+cabecalho_lista_fechados = font_titulo.render(
+    'Lista de nós fechados', True, COR_FONTE)
+
+# Deslocamento dos textos na tela:
+deslocamento_y_abertos = 90
+deslocamento_x_abertos = 1250
+
+deslocamento_y_fechados = 440
+deslocamento_x_fechados = 1250
+
+deslocamento_y_arvore = 90
+deslocamento_x_arvore = 900
 
 # -----------------------------------------------------------------------
-# DISPLAY SETTINGS
+# CLASSE PARA CADA UM DOS NÓS DISPOSTOS NA TELA
 # -----------------------------------------------------------------------
 
-# Cores
-RED = (237, 0, 38)  # Nós fechados
-GREEN = (0, 101, 68)  # Nós abertos
-BLUE = (120, 199, 235)  # Inicio
-YELLOW = (253, 194, 0)  # Final
-LIGHT_GREEN = (204, 225, 0)  # Caminho
-GREY = (128, 128, 128)  # Linhas da matriz
-WHITE = (255, 255, 255)  # Cor padrão
-BLACK = (0, 0, 0)  # Obstáculos
 
-WIDTH = 600  # Tamanho da tela
-WINDOW = pygame.display.set_mode((WIDTH, WIDTH))  # Definição da janela
-pygame.display.set_caption('A(star) - Path Finding')
+class Ponto:
+    """
+    Classe utilizada para gerar cada um dos 'quadradinhos' ou 'nós' do grafo.
+    """
+    # Construtor:
 
+    def __init__(self, linha, coluna, largura, qtd_linhas):
+        self.linha = linha
+        self.coluna = coluna
+        self.largura = largura
+        self.qtd_linhas = qtd_linhas
 
-# -----------------------------------------------------------------------
-# CLASSE PONTO
-# -----------------------------------------------------------------------
-"""
-Classe utilizada para gerar cada um dos 'quadradinhos' ou 'nós' do grafo.
-"""
+        # Atributos para desenhar cubos independentemente do tamanho da tela:
+        self.x = linha * largura
+        self.y = coluna * largura
 
+        # Estado padrão padrão dos nós:
+        self.estado = ESTADOS['vazio']
 
-class Point:
+        # Pontos vizinhos:
+        self.vizinhos = []
 
-    def __init__(self, row, col, width, total_rows):
-        self.row = row
-        self.col = col
-        self.width = width
-        self.total_rows = total_rows
-
-        # Desenhar cubos independentemente do tamanho da tela
-        self.x = row * width
-        self.y = col * width
-
-        # Cor padrão
-        self.color = WHITE
-
-        # Pontos vizinhos
-        self.nearby_points = []
-
-        # heuristica de cada ponto
+        # Heurística de cada nó:
         self.h = 0
+        self.g = 0
 
-    # Getters & Setters
+    # Getters:
+    def get_posicao(self):
+        return self.linha, self.coluna
 
-    def get_position(self):
-        return self.row, self.col
-
-    def is_open(self):
-        return self.color == GREEN
-
-    def is_closed(self):
-        return self.color == RED
-
-    def is_obstacle(self):
-        return self.color == BLACK
-
-    def is_start(self):
-        return self.color == BLUE
-
-    def is_end(self):
-        return self.color == YELLOW
-
-    def set_empty(self):
-        self.color = WHITE
-
-    def set_close(self):
-        self.color = RED
-
-    def set_open(self):
-        self.color = GREEN
-
-    def set_obstacle(self):
-        self.color = BLACK
-
-    def set_start(self):
-        self.color = YELLOW
-
-    def set_end(self):
-        self.color = BLUE
-
-    def set_path(self):
-        self.color = LIGHT_GREEN
-
-    def set_h_manhanttan(self, end_pos):
-        self.h = manhattan(self.get_position(), end_pos.get_position())
-
-    def set_h_chebyshev(self, end_pos):
-        self.h = chebyshev(self.get_position(), end_pos.get_position())
-
-    def set_h_inadmissible(self, end_pos):
-        self.h = inadmissible_heuristics(
-            self.get_position(), end_pos.get_position())
-
-    def get_heuristic(self):
+    def get_heuristica(self):
         return self.h
 
-    def draw(self, window):
-        '''
-        Desenha um quadrado na jenela (pygame window) passada por parâmetro.
+    def get_g(self):
+        return self.g
 
+    # Setters:
+    def set_g(self, valor):
+        self.g = valor
+
+    def set_vazio(self):
+        self.estado = ESTADOS['vazio']
+
+    def set_fechado(self):
+        self.estado = ESTADOS['fechado']
+
+    def set_aberto(self):
+        self.estado = ESTADOS['aberto']
+
+    def set_obstaculo(self):
+        self.estado = ESTADOS['obstaculo']
+
+    def set_inicio(self):
+        self.estado = ESTADOS['inicio']
+
+    def set_fim(self):
+        self.estado = ESTADOS['fim']
+
+    def set_caminho(self):
+        self.estado = ESTADOS['caminho']
+
+    def set_h_manhanttan(self, end_pos):
+        self.h = manhattan(self.get_posicao(), end_pos.get_posicao())
+
+    def set_h_chebyshev(self, end_pos):
+        self.h = chebyshev(self.get_posicao(), end_pos.get_posicao())
+
+    def set_h_inadmissivel(self, end_pos, obs):
+        h = heuristica_inadmissivel(
+            self.get_posicao(), end_pos.get_posicao())
+        self.h = abs(h + obs)
+
+    # Métodos para checagem de estados de cada nó:
+    def is_aberto(self):
+        return self.estado == ESTADOS['aberto']
+
+    def is_fechado(self):
+        return self.estado == ESTADOS['fechado']
+
+    def is_obstaculo(self):
+        return self.estado == ESTADOS['obstaculo']
+
+    def is_inicio(self):
+        return self.estado == ESTADOS['inicio']
+
+    def is_fim(self):
+        return self.estado == ESTADOS['fim']
+
+    # Outros Métodos:
+    def desenhar(self, janela):
+        '''
+        Desenha um quadrado na janela (pygame window) passada por parâmetro.
         Parâmetros:
-            window (pygame window): janela do pygame.
-
-        Observação: O ponto (0, 0) fica localizado no vértice superior esquerdo. 
-        Logo, aumentar o Y significa ir para baixo e aumentar o X ir para a direita.
+            janela (pygame window): janela do pygame.
+        Observação: 
+        O ponto (0, 0) fica localizado no vértice superior esquerdo. 
+        Logo, aumentar o Y significa ir para baixo e 
+        aumentar o X ir para a direita.
         '''
-        pygame.draw.rect(window, self.color,
-                         (self.x, self.y, self.width, self.width))
+        pygame.draw.rect(janela, self.estado,
+                         (self.x, self.y, self.largura, self.largura))
 
-    def update_nearby_points(self, matrix):
+    def atualizar_pontos_vizinhos(self, matriz):
         '''
-        Atualizar a lista com todos os pontos próximos ao ponto em questão, verificando
-        se o ponto existe e se não é um obstáculo.
-
+        Atualizar a lista com todos os pontos próximos ao ponto em questão, 
+        verificando se o ponto existe e se não é um obstáculo.
         Parâmetro:
             matrix (list): lista de listas.
         '''
-        self.nearby_points = []
-        # O ponto de baixo existe? Ele é um obstaculo?
-        # DOWN
-        if self.row < self.total_rows - 1 and not matrix[self.row + 1][self.col].is_obstacle():
-            self.nearby_points.append(matrix[self.row + 1][self.col])
-        # O ponto de cima existe? Ele é um obstaculo?
-        # UP
-        # -1 pois Y cresce inversamente
-        if self.row > 0 and not matrix[self.row - 1][self.col].is_obstacle():
-            self.nearby_points.append(matrix[self.row - 1][self.col])
-        # O ponto da direita existe? Ele é um obstaculo?
-        # RIGHT
-        if self.col < self.total_rows - 1 and not matrix[self.row][self.col + 1].is_obstacle():
-            self.nearby_points.append(matrix[self.row][self.col + 1])
-        # O ponto da esquerda existe? Ele é um obstaculo?
-        # LEFT
-        if self.col > 0 and not matrix[self.row][self.col - 1].is_obstacle():
-            self.nearby_points.append(matrix[self.row][self.col - 1])
+        self.vizinhos = []
+        # O ponto de baixo existe? Ele é um obstaculo?:
+        if self.linha < self.qtd_linhas - 1 \
+                and not matriz[self.linha + 1][self.coluna].is_obstaculo():
+            self.vizinhos.append(matriz[self.linha + 1][self.coluna])
+
+        # O ponto de cima existe? Ele é um obstaculo?:
+        if self.linha > 0 \
+                and not matriz[self.linha - 1][self.coluna].is_obstaculo():
+            self.vizinhos.append(matriz[self.linha - 1][self.coluna])
+
+        # O ponto da direita existe? Ele é um obstaculo?:
+        if self.coluna < self.qtd_linhas - 1 \
+                and not matriz[self.linha][self.coluna + 1].is_obstaculo():
+            self.vizinhos.append(matriz[self.linha][self.coluna + 1])
+
+        # O ponto da esquerda existe? Ele é um obstaculo?:
+        if self.coluna > 0 \
+                and not matriz[self.linha][self.coluna - 1].is_obstaculo():
+            self.vizinhos.append(matriz[self.linha][self.coluna - 1])
 
     def __lt__(self, other):
         return False
+
+    def __str__(self):
+        return str(self.get_posicao())
 
 
 # -----------------------------------------------------------------------
 # HEURÍSTICAS
 # -----------------------------------------------------------------------
-
-# Manhattan -> Admissível
-def manhattan(p1, p2):
+def manhattan(p1, p2):  # -> Admissível
     '''
     Heurística 01: Manhattan. Será utilizada a distância de Manhattan como 
     uma das heurísticas adimissíveis.
-
     Parâmetros:
-        p1 (Point): ponto inicial, de onde quer sair.
-        p2 (Point): ponto final, para onde quer ir.
-
+        p1 (Ponto): ponto inicial, de onde quer sair.
+        p2 (Ponto): ponto final, para onde quer ir.
     Retorno:
         int: distância 'Manhattan' entre p1 e p2.
     '''
@@ -186,15 +221,13 @@ def manhattan(p1, p2):
     return abs(x1 - x2) + abs(y1 - y2)
 
 
-# Chebyshev -> Admissível
-def chebyshev(p1, p2):
+def chebyshev(p1, p2):  # -> Admissível
     '''
-    Heurística 02: Chebyshev. Retona a maior entre as diferenças de X e Y de dois pontos.
-
+    Heurística 02: Chebyshev. Retona a maior entre as diferenças 
+    de X e Y de dois pontos.
     Parâmetros:
-        p1 (Point): ponto inicial, de onde quer sair.
-        p2 (Point): ponto final, para onde quer ir.
-
+        p1 (Ponto): ponto inicial, de onde quer sair.
+        p2 (Ponto): ponto final, para onde quer ir.
     Retorno:
         int: distância 'Chebyshev' entre p1 e p2.
     '''
@@ -203,308 +236,392 @@ def chebyshev(p1, p2):
     return max(abs(x1 - x2), abs(y1 - y2))
 
 
-# Inadmissível
-def inadmissible_heuristics(p1, p2):
+def heuristica_inadmissivel(p1, p2):  # -> Inadmissível
     '''
-    Heurística 03: Calculo totalmente doido inventado por nós para gerar uma heurística não admissível.
-
+    Heurística 03: Multiplica a distância de manhattan pela 
+    distância de chebyshev.
     Parâmetros:
-        p1 (Point): ponto inicial, de onde quer sair.
-        p2 (Point): ponto final, para onde quer ir.
-
+        p1 (Ponto): ponto inicial, de onde quer sair.
+        p2 (Ponto): ponto final, para onde quer ir.
     Retorno:
-        int: distância inventada entre p1 e p2.
+        int: distância "inventada" entre p1 e p2.
     '''
-    x1, y1 = p1
-    x2, y2 = p2
 
-    return abs(x1 - y1) * abs(y2 + x2) - abs(x2 - y1) * abs(y1 + x2)
+    return manhattan(p1, p2) * chebyshev(p1, p2)
+
 
 # -----------------------------------------------------------------------
-# A STAR
+# Buscador de Caminhos com A*
 # -----------------------------------------------------------------------
-
-
-def a_start_path_finding(redraw_screen, matrix, start_pos, end_pos):
+def busca_A_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
     '''
-    Função mais importante do projeto. É aqui que o algoritmo A* é definido, 
+    Função central do projeto. É aqui que o algoritmo A* é definido, 
     todas as estruturas de dados são modificadas e a melhor decisão é tomada 
     com base em uma determinada função de avaliação.
-
     F(n) = g(n) + h(n)
-
     Parâmetros:
-        redraw_screen (function): função que atualiza a tela.
-        matrix (list): lista de listas.
-        start_pos (Point): ponto inicial, do qual parte-se.
-        end_pos (Point): ponto final, no qual pretende-se chegar.
+        redesenhar_tela (function): função que atualiza a tela.
+        matriz (list): lista de listas.
+        pos_inicio (Ponto): ponto inicial, do qual parte-se.
+        pos_fim (Ponto): ponto final, no qual pretende-se chegar.
     '''
-    count = 0
-    path = {}
 
-    # Estrutura de dados dos nós abertos e visitados
-    open_list_queue = PriorityQueue()  # Retorna sempre o menor elemento da fila
-    open_list_queue.put((0, count, start_pos))
-    open_list = {start_pos}
-    closed_list = set()
+    contador = 0
+    caminho = {}
+    global deslocamento_y_abertos, deslocamento_x_abertos, deslocamento_x_fechados, deslocamento_y_fechados
 
-    # Parâmetros para função de avaliação
-    g = {point: float("inf") for row in matrix for point in row}
-    g[start_pos] = 0
-    f = {point: float("inf") for row in matrix for point in row}
+    # Estrutura de dados dos nós abertos e fechados:
+    fila = PriorityQueue()  # Retorna sempre o menor elemento da fila
+    fila.put((0, contador, pos_inicio))
+    lista_abertos = {pos_inicio}
+    lista_fechados = set()
 
-    f[start_pos] = h1(start_pos.get_position(), end_pos.get_position())
-    #[Substituir? ] f[start_pos] = g[start_pos] + h1(start_pos.get_position(), end_pos.get_position())
-    print('Custo real: ', end="")
-    print(g[start_pos], end="  ")
-    print('Heuristica: ', end="")
-    print(h1(start_pos.get_position(), end_pos.get_position()), end="  ")
-    print('Função de ativação: ', end ="")
-    print(f[start_pos]) 
+    # Parâmetros para função de avaliação:
+    g = {ponto: float("inf") for linha in matriz for ponto in linha}
+    g[pos_inicio] = 0
 
+    f = {ponto: float("inf") for linha in matriz for ponto in linha}
 
-
-    while not open_list_queue.empty():
+    while not fila.empty():
+        # Encerra o jogo ao clicar no botão de sair:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
 
-        current = open_list_queue.get()[2]
+        atual = fila.get()[2]
+        atual.set_g(g[atual])  # Valor de 'g' para cada nó
 
-        # Desenhar melhor caminho
-        if current == end_pos:
-            great_way(path, end_pos, redraw_screen)
-            end_pos.set_end()
-            start_pos.set_start()
+        # Solução encontrada? Desenha o melhor caminho:
+        if atual == pos_fim:
+            lista_abertos.remove(pos_fim)
+            lista_fechados.add(pos_fim)
+            printar_listas(lista_abertos, lista_fechados)
+            print(f'CUSTO REAL = {pos_fim.get_g()}')
+            # Enviar listas por parametros
+            desenhar_melhor_caminho(caminho, pos_fim, redesenhar_tela)
+            pos_fim.set_fim()
+            pos_inicio.set_inicio()
+
+            for ponto in lista_abertos:
+                # Exibe o nó aberto na tela do jogo:
+                if deslocamento_x_abertos > LARGURA - 50:
+                    deslocamento_x_abertos = 1250
+                    deslocamento_y_abertos += 20
+                JANELA.blit(font.render(str(ponto) + ',', True, COR_FONTE),
+                            dest=(deslocamento_x_abertos, deslocamento_y_abertos))
+                deslocamento_x_abertos += 55
+
+            for ponto in lista_fechados:
+                # Exibe o nó fechado na tela do jogo:
+                if deslocamento_x_fechados > LARGURA - 50:
+                    deslocamento_x_fechados = 1250
+                    deslocamento_y_fechados += 20
+
+                JANELA.blit(font.render(str(ponto) + ',', True, COR_FONTE),
+                            dest=(deslocamento_x_fechados, deslocamento_y_fechados))
+
+                deslocamento_x_fechados += 55
+
             return True
 
-        for nearby_point in current.nearby_points:
-            temp_g = g[current] + 1
+        # Caso contrário:
+        for ponto_vizinho in atual.vizinhos:
+            temp_g = g[atual] + 1
 
-            if temp_g < g[nearby_point]:
-                path[nearby_point] = current
-                g[nearby_point] = temp_g
-                print('Custo real: ', end="")
-                print(temp_g, end="  ")
-                print('Heuristica: ', end="")
-                print(h1(nearby_point.get_position(), end_pos.get_position()), end="  ")
-                f[nearby_point] = temp_g + nearby_point.get_heuristic()
-                print('Função de ativação: ',end ="")
-                print(f[nearby_point]) 
-                if nearby_point not in open_list and nearby_point not in closed_list:
+            if temp_g < g[ponto_vizinho]:
+                caminho[ponto_vizinho] = atual
+                g[ponto_vizinho] = temp_g
 
-                    count += 1
-                    open_list_queue.put((f[nearby_point], count, nearby_point))
-                    open_list.add(nearby_point)
-                    nearby_point.set_open()
+                # Atualiza valor de f para tomar decisão:
+                f[ponto_vizinho] = temp_g + ponto_vizinho.get_heuristica()
 
-        redraw_screen()
+                # Alteração de estado - Nó aberto:
+                if ponto_vizinho not in lista_abertos \
+                        and ponto_vizinho not in lista_fechados:
+                    contador += 1
+                    fila.put((f[ponto_vizinho], contador, ponto_vizinho))
+                    lista_abertos.add(ponto_vizinho)
+                    ponto_vizinho.set_aberto()
 
-        if current != start_pos:
-            open_list.remove(current)
-            closed_list.add(current)
-            current.set_close()
+        redesenhar_tela()
+
+        # Alteração de estado - Nó fechado:
+        lista_abertos.remove(atual)
+        lista_fechados.add(atual)
+        atual.set_fechado()
+
+        printar_listas(lista_abertos, lista_fechados)
 
     return False
+
 
 # -----------------------------------------------------------------------
 # ESTRUTURA DE DADOS
 # -----------------------------------------------------------------------
-
-
-def create_matrix(rows, width):
+def criar_matriz(qtd_linhas, largura):
     '''
     Criar uma matriz, ou seja, uma lista de listas para guardar cada
     um dos pontos criados.
-
     Parâmetros:
-        rows (int): número de linhas.
-        width (int): tamanho da janela.
-
+        qtd_linhas (int): número de linhas.
+        largura (int): tamanho da janela.
     Retorno:
         list: lista de listas, a matriz.
-
     '''
-    matrix = []
-    space = width // rows  # Espaço entre as linhas da janela pygame
-    for i in range(rows):
-        matrix.append([])
-        for j in range(rows):
-            # Novo ponto (nó)
-            point = Point(row=i, col=j, width=space, total_rows=rows)
-            matrix[i].append(point)
+    matriz = []
+    margem = largura // qtd_linhas  # Espaço entre os nós dentro do jogo
+    for linha in range(qtd_linhas):
+        matriz.append([])
+        for coluna in range(qtd_linhas):
+            # Criação de um novo nó:
+            ponto = Ponto(linha=linha, coluna=coluna,
+                          largura=margem, qtd_linhas=qtd_linhas)
+            matriz[linha].append(ponto)
 
-    return matrix
+    return matriz
+
 
 # -----------------------------------------------------------------------
 # FUNÇÕES AUXILIARES
 # -----------------------------------------------------------------------
+def printar_listas(lista_abertos, lista_fechados):
+    print('LISTA NOS ABERTOS: ')
+    for item in lista_abertos:
+        print(f'{item},', end=" ")
+
+    print('\n\nLISTA NOS FECHADOS: ')
+    for item in lista_fechados:
+        print(f'{item},', end=" ")
+    print('', end='\n\n\n')
 
 
-def draw_matrix(window, rows, width):
+def desenhar_grade(janela, qtd_linhas, largura):
     '''
-    Desenhar as linhas que delimitam cada um dos pontos (nós) do grafo. Isto é, aqui 
-    é gerada a representação visual da estrutura de dados, ou melhor, da matriz.
-
+    Desenha as linhas que delimitam cada um dos pontos (nós) do grafo. Isto é, 
+    aqui é gerada a representação visual da estrutura de dados, ou melhor, 
+    da matriz.
     Parâmetros:
-        window (pygame window): janela do pygame.
-        rows (int): número de linhas.
-        width (int): tamanho da janela.
+        janela (pygame window): janela do pygame.
+        qtd_linhas (int): número de linhas.
+        largura (int): tamanho da janela.
     '''
-    space = width // rows  # Espaço entre as linhas da janela pygame
-    # Desenhar linhas horizontais
-    for i in range(rows):
-        pygame.draw.line(window, GREY, (0, i * space), (width, i * space))
-    # Desenhar linhas verticais
-    for j in range(rows):
-        pygame.draw.line(window, GREY, (j * space, 0), (j * space, width))
+
+    COR_LINHAS = (128, 128, 128)
+    margem = largura // qtd_linhas  # Espaço entre os nós dentro do jogo
+
+    # Desenha as linhas horizontais:
+    for linha in range(qtd_linhas):
+        pygame.draw.line(janela, COR_LINHAS,
+                         (0, linha * margem), (largura, linha * margem))
+
+    # Desenha as linhas verticais:
+    for coluna in range(qtd_linhas):
+        pygame.draw.line(janela, COR_LINHAS,
+                         (coluna * margem, 0), (coluna * margem, largura))
 
 
-def redraw_screen(window, matrix, rows, width):
+def redesenhar_tela(janela, matriz, qtd_linhas, largura):
     '''
-    Resenha, isto é, limpa a tela e redenha tudo novamente com os estados atuais.
-
+    Redesenha, isto é, limpa a tela e redenha tudo novamente com os estados atuais.
     Parâmetros:
-        window (pygame window): janela do pygame.
-        matrix (list): lista de listas.
-        rows (int): número de linhas.
-        width (int): tamanho da janela.
+        janela (pygame window): janela do pygame.
+        matriz (list): lista de listas.
+        qtd_linhas (int): número de linhas.
+        largura (int): tamanho da janela.
     '''
-    window.fill(WHITE)  # limpar a tela
+    janela.blit(cabecalho_arvore_busca, dest=(900, 50))
 
-    for row in matrix:
-        for point in row:
-            # Desenhe cada ponto de cada uma das linhas
-            point.draw(window)
+    janela.blit(cabecalho_lista_abertos, dest=(1250, 50))
 
-    draw_matrix(window, rows, width)
+    janela.blit(cabecalho_lista_fechados, dest=(1250, 400))
+
+    janela.blit(font_aviso.render(
+        'Aperte a tecla "f5" para reiniciar o jogo', False, (0, 255, 0)), dest=(1300, 25))
+
+    for linha in matriz:
+        for ponto in linha:
+            # Desenha cada nó de cada uma das linhas:
+            ponto.desenhar(janela)
+
+    desenhar_grade(janela, qtd_linhas, largura)
     pygame.display.update()
 
 
-def get_clicked_mouse_position(mouse_position, rows, width):
+def get_mouse_pos(mouse_pos, qtd_linhas, largura):
     '''
     Retorna a posição em que o mouse estava quando houve o clique.
-
     Parâmetros:
-        mouse_position (tuple): posição do mouse [linha, coluna] no momento do clique.
-        rows (int): número de linhas.
-        width (int): tamanho da janela.
-
+        mouse_pos (tuple): posição do mouse [x, y] no momento do clique.
+        qtd_linhas (int): número de linhas.
+        largura (int): tamanho da janela.
     Retorno:
         tuple: posição x, y do mouse quando houver clique.
-
     '''
-    space = width // rows  # Espaço entre as linhas da janela pygame
-    i, j = mouse_position
+    margem = largura // qtd_linhas  # Espaço entre os nós dentro do jogo
+    x, y = mouse_pos
 
-    row = i // space
-    col = j // space
+    linha = x // margem
+    coluna = y // margem
 
-    return row, col
+    return linha, coluna
 
 
-def great_way(path, current, redraw_screen):
+def desenhar_melhor_caminho(caminho, atual, redesenhar_tela):
     '''
-    Desenha na tela o melhor caminho após o algoritmo ter encontrado uma solução.
-    Somente será o melhor caminho caso a heurística escolhida seja admissível.
-
+    Desenha na tela o melhor caminho após o algoritmo ter encontrado 
+    uma solução. Somente será o melhor caminho caso a heurística escolhida 
+    seja admissível.
     Parâmetros:
-        path(dict): dicionário com todos o nós do melhor caminho. 
-        current(Point): ponto atual, o destino.
-        redraw_screen(function): função que redesenha a tela.
+        caminho(dict): dicionário com todos o nós do melhor caminho. 
+        atual(Point): ponto atual, o destino.
+        redesenhar_tela(function): função que redesenha a tela.
     '''
-    while current in path:
-        current = path[current]
-        current.set_path()
-        redraw_screen()
+
+    global deslocamento_y_arvore, deslocamento_x_arvore
+    print('CAMINHO ESCOLHIDO')
+    print(f'Ponto: {atual.get_posicao()} G:  {atual.get_g()}  H: {atual.get_heuristica()} | F = {atual.get_g() + atual.get_heuristica()}',  end="  ")
+
+    JANELA.blit(font.render(
+        str(f'Ponto: {atual.get_posicao()} G:  {atual.get_g()}  H: {atual.get_heuristica()} | F = {atual.get_g() + atual.get_heuristica()}'), True, COR_FONTE),
+        dest=(deslocamento_x_arvore, 90))
+
+    print()
+    while atual in caminho:
+        atual.set_caminho()
+        atual = caminho[atual]
+        redesenhar_tela()
+
+        deslocamento_y_arvore += 20
+
+        JANELA.blit(font.render(
+            str(f'Ponto: {atual.get_posicao()} G:  {atual.get_g()}  H: {atual.get_heuristica()} | F = {atual.get_g() + atual.get_heuristica()}'), True, COR_FONTE),
+            dest=(deslocamento_x_arvore, deslocamento_y_arvore))
+
+        print(
+            f'Ponto: {atual.get_posicao()} G:  {atual.get_g()}  H: {atual.get_heuristica()} | F = {atual.get_g() + atual.get_heuristica()}')
+
+        redesenhar_tela()
+
 
 # -----------------------------------------------------------------------
-# MAIN
+# FUNÇÃO PRINCIPAL
 # -----------------------------------------------------------------------
-
-
-def main(window, width):
+def main(janela, largura):
     # Parâmetros iniciais
-    ROWS = 50
-    matrix = create_matrix(ROWS, width)
-    start_position = None
-    end_position = None
-    is_running = True
-    while is_running:
-        # Desenha a tela cada mudança de estado
-        redraw_screen(window, matrix, ROWS, width)
+    NUM_LINHAS = 20
+    matriz = criar_matriz(NUM_LINHAS, largura // 2)
+    pos_inicial = None
+    pos_final = None
+    em_execucao = True
 
+    while em_execucao:
+        # Desenha na tela cada mudança de estado:
+        redesenhar_tela(janela, matriz, NUM_LINHAS, largura // 2)
+
+        # Para cada evento detectado no jogo:
         for event in pygame.event.get():
-
-            # Finalizar jogo
+            # Finalizar jogo:
             if event.type == pygame.QUIT:
-                is_running = False
+                em_execucao = False
 
-            # get_pressed()[0] -> BOTAO ESQUERDO DO MOUSE
+            # Caso botão esquerdo do mouse for pressionado:
             if pygame.mouse.get_pressed()[0]:
-                # Obter posicao do mouse e mapear na matriz
-                mouse_position = pygame.mouse.get_pos()
-                row, col = get_clicked_mouse_position(
-                    mouse_position, ROWS, width)
-                point = matrix[row][col]
-                # Setar posicao inicial
-                if not start_position and point != end_position:
-                    start_position = point
-                    start_position.set_start()
-                # Setar posicao final
-                elif not end_position and point != start_position:
-                    end_position = point
-                    end_position.set_end()
-                # Setar obstaculos
-                elif point != start_position and point != end_position:
-                    point.set_obstacle()
+                # Obtém a posição do mouse e mapeia na matriz:
+                pos_mouse = pygame.mouse.get_pos()
+                linha, coluna = get_mouse_pos(
+                    pos_mouse, NUM_LINHAS, largura // 2)
+                if linha >= NUM_LINHAS or coluna >= NUM_LINHAS:
+                    break
+                ponto = matriz[linha][coluna]
 
-            # get_pressed()[2] -> BOTAO DIREITO DO MOUSE
+                # Define a posição inicial:
+                if not pos_inicial and ponto != pos_final:
+                    pos_inicial = ponto
+                    pos_inicial.set_inicio()
+
+                # Define a posição final:
+                elif not pos_final and ponto != pos_inicial:
+                    pos_final = ponto
+                    pos_final.set_fim()
+
+                # Define obstáculos:
+                elif ponto != pos_inicial and ponto != pos_final:
+                    ponto.set_obstaculo()
+
+            # Caso botão direito do mouse for pressionado:
             elif pygame.mouse.get_pressed()[2]:
-                # Obter posicao do mouse e mapear na matriz
-                mouse_position = pygame.mouse.get_pos()
-                row, col = get_clicked_mouse_position(
-                    mouse_position, ROWS, width)
-                point = matrix[row][col]
-                point.set_empty()  # Apagar ponto (white)
+                # Obtém a posição do mouse e mapeia na matriz:
+                pos_mouse = pygame.mouse.get_pos()
+                linha, coluna = get_mouse_pos(
+                    pos_mouse, NUM_LINHAS, largura // 2)
+                if linha >= NUM_LINHAS or coluna >= NUM_LINHAS:
+                    break
+                ponto = matriz[linha][coluna]
+                ponto.set_vazio()
 
-                # Apagar ponto inicial e final
-                if point == start_position:
-                    start_position = None
-                elif point == end_position:
-                    end_position = None
+                # Apaga os pontos inicial e final caso clicado neles:
+                if ponto == pos_inicial:
+                    pos_inicial = None
+                elif ponto == pos_final:
+                    pos_final = None
 
-            # Inicializar jogo, rodar algoritmo
+            # Contador de obstáculos (utilizado na heurística inadmissível):
+            obstaculos = 0
+            for linha in matriz:
+                for ponto in linha:
+                    if ponto.is_obstaculo():
+                        obstaculos += 1
+
+            # Botão de espaço = inicializa o jogo:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and start_position and end_position:
-                    for row in matrix:
-                        for point in row:
-                            # Todos pontos vizinhos
-                            point.update_nearby_points(matrix)
-                            # point.set_h_manhanttan(end_position)
-                            # point.set_h_chebyshev(end_position)
-                            point.set_h_inadmissible(end_position)
+                if pygame.key.name(event.key) == 'f5':
+                    pygame.draw.rect(JANELA, (0, 0, 0),
+                                     pygame.Rect(700, 0, 1000, 1000))
 
-                    # Iniciar algoritmo
-                    a_start_path_finding(
-                        lambda: redraw_screen(window, matrix, ROWS, width),
-                        matrix,
-                        start_position,
-                        end_position,
+                    global deslocamento_y_abertos, deslocamento_x_abertos, deslocamento_y_fechados, \
+                        deslocamento_x_fechados, deslocamento_y_arvore, deslocamento_x_arvore
+
+                    # Reseta as variáveis de deslocamento do texto:
+                    deslocamento_y_abertos = 90
+                    deslocamento_x_abertos = 1250
+                    deslocamento_y_fechados = 440
+                    deslocamento_x_fechados = 1250
+                    deslocamento_y_arvore = 90
+                    deslocamento_x_arvore = 900
+
+                    # Desenha a grade novamente para um novoz
+                    main(janela=JANELA, largura=LARGURA)
+
+                if event.key == pygame.K_SPACE and pos_inicial and pos_final:
+                    for linha in matriz:
+                        for ponto in linha:
+                            # Pontos vizinhos:
+                            ponto.atualizar_pontos_vizinhos(matriz)
+
+                            # Descomente uma das três heurísticas abaixo:
+                            ponto.set_h_manhanttan(pos_final)
+                            # ponto.set_h_chebyshev(pos_final)
+                            # ponto.set_h_inadmissivel(pos_final, obstaculos)
+
+                    # Inicia o algoritmo A*:
+                    busca_A_estrela(
+                        lambda: redesenhar_tela(
+                            janela, matriz, NUM_LINHAS, largura // 2),
+                        matriz,
+                        pos_inicial,
+                        pos_final,
                     )
 
-                # Limpar tela após execução
+                # Recria a tela após execução:
                 if event.key == pygame.K_BACKSPACE:
-                    start_position = None
-                    end_position = None
-                    matrix = create_matrix(ROWS, width)
+                    pos_inicial = None
+                    pos_final = None
+                    matriz = criar_matriz(NUM_LINHAS, largura // 2)
 
-    pygame.quit()  # Fechar a janela
+    pygame.quit()  # Encerra a execução
 
 
 # -----------------------------------------------------------------------
-# START GAME
+# INICIA O JOGO
 # -----------------------------------------------------------------------
-
-main(window=WINDOW, width=WIDTH)
-
+main(janela=JANELA, largura=LARGURA)
