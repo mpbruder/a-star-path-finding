@@ -206,8 +206,8 @@ def manhattan(p1, p2): # -> Admissível
     Heurística 01: Manhattan. Será utilizada a distância de Manhattan como 
     uma das heurísticas adimissíveis.
     Parâmetros:
-        p1 (Node): ponto inicial, de onde quer sair.
-        p2 (Node): ponto final, para onde quer ir.
+        p1 (Ponto): ponto inicial, de onde quer sair.
+        p2 (Ponto): ponto final, para onde quer ir.
     Retorno:
         int: distância 'Manhattan' entre p1 e p2.
     '''
@@ -221,8 +221,8 @@ def chebyshev(p1, p2): # -> Admissível
     Heurística 02: Chebyshev. Retona a maior entre as diferenças 
     de X e Y de dois pontos.
     Parâmetros:
-        p1 (Node): ponto inicial, de onde quer sair.
-        p2 (Node): ponto final, para onde quer ir.
+        p1 (Ponto): ponto inicial, de onde quer sair.
+        p2 (Ponto): ponto final, para onde quer ir.
     Retorno:
         int: distância 'Chebyshev' entre p1 e p2.
     '''
@@ -236,8 +236,8 @@ def heuristica_inadmissivel(p1, p2): # -> Inadmissível
     Heurística 03: Multiplica a distância de manhattan pela 
     distância de chebyshev.
     Parâmetros:
-        p1 (Node): ponto inicial, de onde quer sair.
-        p2 (Node): ponto final, para onde quer ir.
+        p1 (Ponto): ponto inicial, de onde quer sair.
+        p2 (Ponto): ponto final, para onde quer ir.
     Retorno:
         int: distância "inventada" entre p1 e p2.
     '''
@@ -257,8 +257,8 @@ def busca_A_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
     Parâmetros:
         redesenhar_tela (function): função que atualiza a tela.
         matriz (list): lista de listas.
-        pos_inicio (Node): ponto inicial, do qual parte-se.
-        pos_fim (Node): ponto final, no qual pretende-se chegar.
+        pos_inicio (Ponto): ponto inicial, do qual parte-se.
+        pos_fim (Ponto): ponto final, no qual pretende-se chegar.
     '''
     
     contador = 0
@@ -272,10 +272,10 @@ def busca_A_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
     lista_fechados = set()
 
     # Parâmetros para função de avaliação:
-    g = {node: float("inf") for linha in matriz for node in linha}
+    g = {ponto: float("inf") for linha in matriz for ponto in linha}
     g[pos_inicio] = 0
     
-    f = {node: float("inf") for linha in matriz for node in linha}
+    f = {ponto: float("inf") for linha in matriz for ponto in linha}
 
     while not fila.empty():
         # Encerra o jogo ao clicar no botão de sair:
@@ -493,7 +493,7 @@ def desenhar_melhor_caminho(caminho, atual, redesenhar_tela):
 # -----------------------------------------------------------------------
 def main(janela, largura):
     # Parâmetros iniciais
-    NUM_LINHAS = 5
+    NUM_LINHAS = 50
     matriz = criar_matriz(NUM_LINHAS, largura // 2)
     pos_inicial = None
     pos_final = None
