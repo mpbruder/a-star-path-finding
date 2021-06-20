@@ -3,7 +3,6 @@ from queue import PriorityQueue
 
 """
 Path Finding - Buscador de caminhos com A*
-
 É um programa em python desenvolvido durante a disciplina de 
 Inteligência Artificial da Faculdade de Tecnologia da Unicamp pelos alunos:
     1. Kevin Barrios
@@ -24,12 +23,12 @@ para poder comparar os resultados.
 # Cada estado de um Nó é representado por uma cor:
 ESTADOS = {
     'vazio': (255, 255, 255),  # Branco
-    'fechado': (237, 0, 38, 0.5),  # Vermelho
-    'aberto': (0, 101, 68),  # Verde
-    'inicio': (120, 199, 235),  # Azul
-    'fim': (253, 194, 0),  # Amarelo
-    'obstaculo': (0, 0, 0),  # Preto
-    'caminho': (204, 225, 0),  # Verde Claro
+    'fechado': (0, 53, 73),  # Vermelho
+    'aberto': (64, 208, 231),  # Verde
+    'inicio': (39, 161, 23),  # Azul
+    'fim': (255, 0, 0),  # Amarelo
+    'obstaculo': (128, 128, 128),  # Preto
+    'caminho': (252, 255, 72),  # Verde Claro
 }
 
 # Dimensões:
@@ -299,8 +298,9 @@ def busca_A_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
         if atual == pos_fim:
             lista_abertos.remove(pos_fim)
             lista_fechados.add(pos_fim)
-            print(f"ITERAÇÃO [{iterador:2}]")
+            print(f"ITERACAO {iterador:2}: ")
             printar_listas(lista_abertos, lista_fechados)
+            print('========= ARVORE DE BUSCA =========')
             print(f'CUSTO REAL = {pos_fim.get_g()}')
             # Enviar listas por parametros
             desenhar_melhor_caminho(caminho, pos_fim, redesenhar_tela)
@@ -355,7 +355,7 @@ def busca_A_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
         lista_fechados.add(atual)
         atual.set_fechado()
 
-        print(f"ITERAÇÃO [{iterador:2}]")
+        print(f"ITERACAO {iterador:2}:")
         printar_listas(lista_abertos, lista_fechados)
 
     return False
@@ -391,15 +391,31 @@ def criar_matriz(qtd_linhas, largura):
 # FUNÇÕES AUXILIARES
 # -----------------------------------------------------------------------
 def printar_listas(lista_abertos, lista_fechados):
-    print('LISTA NOS ABERTOS: ')
+    print('******** LISTA NOS ABERTOS ********')
     for item in lista_abertos:
         print(f'{item},', end=" ")
-
-    print('\n\nLISTA NOS FECHADOS: ')
+    print('\n')
+    
+    print('******** LISTA NOS FECHADOS ********')
     for item in lista_fechados:
         print(f'{item},', end=" ")
-    print('', end='\n\n\n')
+    print('\n')
 
+
+def resetar_textos():
+    pygame.draw.rect(JANELA, (0, 0, 0),
+    pygame.Rect(700, 0, 1000, 1000))
+
+    global deslocamento_y_abertos, deslocamento_x_abertos, deslocamento_y_fechados, \
+    deslocamento_x_fechados, deslocamento_y_arvore, deslocamento_x_arvore
+
+    # Reseta as variáveis de deslocamento do texto:
+    deslocamento_y_abertos = 90
+    deslocamento_x_abertos = 1250
+    deslocamento_y_fechados = 440
+    deslocamento_x_fechados = 1250
+    deslocamento_y_arvore = 90
+    deslocamento_x_arvore = 900
 
 def desenhar_grade(janela, qtd_linhas, largura):
     '''
@@ -484,7 +500,7 @@ def desenhar_melhor_caminho(caminho, atual, redesenhar_tela):
     '''
 
     global deslocamento_y_arvore, deslocamento_x_arvore
-    print('CAMINHO ESCOLHIDO')
+    print('CAMINHO ESCOLHIDO:')
     print(f'Ponto: {atual.get_posicao()} G:  {atual.get_g()}  H: {atual.get_heuristica()} | F = {atual.get_g() + atual.get_heuristica()}',  end="  ")
 
     JANELA.blit(font.render(
@@ -514,15 +530,21 @@ def desenhar_melhor_caminho(caminho, atual, redesenhar_tela):
 # -----------------------------------------------------------------------
 def main(janela, largura):
     # Parâmetros iniciais
-    NUM_LINHAS = 20
-    matriz = criar_matriz(NUM_LINHAS, largura // 2)
+    NUM_LINHAS = 10
+    
+    if NUM_LINHAS <= 10: 
+        largura = largura // 2
+    else:
+        largura = largura
+        
+    matriz = criar_matriz(NUM_LINHAS, largura)
     pos_inicial = None
     pos_final = None
     em_execucao = True
 
     while em_execucao:
         # Desenha na tela cada mudança de estado:
-        redesenhar_tela(janela, matriz, NUM_LINHAS, largura // 2)
+        redesenhar_tela(janela, matriz, NUM_LINHAS, largura)
 
         # Para cada evento detectado no jogo:
         for event in pygame.event.get():
@@ -535,7 +557,7 @@ def main(janela, largura):
                 # Obtém a posição do mouse e mapeia na matriz:
                 pos_mouse = pygame.mouse.get_pos()
                 linha, coluna = get_mouse_pos(
-                    pos_mouse, NUM_LINHAS, largura // 2)
+                    pos_mouse, NUM_LINHAS, largura)
                 if linha >= NUM_LINHAS or coluna >= NUM_LINHAS:
                     break
                 ponto = matriz[linha][coluna]
@@ -559,7 +581,7 @@ def main(janela, largura):
                 # Obtém a posição do mouse e mapeia na matriz:
                 pos_mouse = pygame.mouse.get_pos()
                 linha, coluna = get_mouse_pos(
-                    pos_mouse, NUM_LINHAS, largura // 2)
+                    pos_mouse, NUM_LINHAS, largura)
                 if linha >= NUM_LINHAS or coluna >= NUM_LINHAS:
                     break
                 ponto = matriz[linha][coluna]
@@ -578,26 +600,18 @@ def main(janela, largura):
                     if ponto.is_obstaculo():
                         obstaculos += 1
 
-            # Botão de espaço = inicializa o jogo:
+            # Condição para detectar eventos do teclado
             if event.type == pygame.KEYDOWN:
+                
+                # Botão 'f5' -> reinicia o jogo:
                 if pygame.key.name(event.key) == 'f5':
-                    pygame.draw.rect(JANELA, (0, 0, 0),
-                                     pygame.Rect(700, 0, 1000, 1000))
-
-                    global deslocamento_y_abertos, deslocamento_x_abertos, deslocamento_y_fechados, \
-                        deslocamento_x_fechados, deslocamento_y_arvore, deslocamento_x_arvore
-
-                    # Reseta as variáveis de deslocamento do texto:
-                    deslocamento_y_abertos = 90
-                    deslocamento_x_abertos = 1250
-                    deslocamento_y_fechados = 440
-                    deslocamento_x_fechados = 1250
-                    deslocamento_y_arvore = 90
-                    deslocamento_x_arvore = 900
-
+                    # Apaga o as infos sobre listas e árvores de busca na tela:
+                    resetar_textos()
+                    
                     # Desenha a grade novamente para um novoz
                     main(janela=JANELA, largura=LARGURA)
 
+                # Botão de espaço -> inicializa o jogo:
                 if event.key == pygame.K_SPACE and pos_inicial and pos_final:
                     for linha in matriz:
                         for ponto in linha:
@@ -612,7 +626,7 @@ def main(janela, largura):
                     # Inicia o algoritmo A*:
                     busca_A_estrela(
                         lambda: redesenhar_tela(
-                            janela, matriz, NUM_LINHAS, largura // 2),
+                            janela, matriz, NUM_LINHAS, largura),
                         matriz,
                         pos_inicial,
                         pos_final,
@@ -622,7 +636,7 @@ def main(janela, largura):
                 if event.key == pygame.K_BACKSPACE:
                     pos_inicial = None
                     pos_final = None
-                    matriz = criar_matriz(NUM_LINHAS, largura // 2)
+                    matriz = criar_matriz(NUM_LINHAS, largura)
 
     pygame.quit()  # Encerra a execução
 
