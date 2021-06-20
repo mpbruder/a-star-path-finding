@@ -2,7 +2,8 @@ import pygame
 from queue import PriorityQueue
 
 """
-Path Finding
+Path Finding - Buscador de caminhos com A*
+
 É um programa em python desenvolvido durante a disciplina de 
 Inteligência Artificial da Faculdade de Tecnologia da Unicamp pelos alunos:
     1. Kevin Barrios
@@ -35,7 +36,8 @@ ESTADOS = {
 LARGURA = 1600
 ALTURA = 800
 JANELA = pygame.display.set_mode((LARGURA, ALTURA))  # Tamanho da janela
-pygame.display.set_caption('Buscador de caminhos com A*')  # Título da janela
+pygame.display.set_caption(
+    'Path Finding - Buscador de caminhos com A*')  # Título da janela
 
 # Definições para escrita de texto na tela do jogo:
 pygame.font.init()
@@ -282,7 +284,9 @@ def busca_A_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
 
     f = {ponto: float("inf") for linha in matriz for ponto in linha}
 
+    iterador = 0
     while not fila.empty():
+        iterador += 1
         # Encerra o jogo ao clicar no botão de sair:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -295,6 +299,7 @@ def busca_A_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
         if atual == pos_fim:
             lista_abertos.remove(pos_fim)
             lista_fechados.add(pos_fim)
+            print(f"ITERAÇÃO [{iterador:2}]")
             printar_listas(lista_abertos, lista_fechados)
             print(f'CUSTO REAL = {pos_fim.get_g()}')
             # Enviar listas por parametros
@@ -350,6 +355,7 @@ def busca_A_estrela(redesenhar_tela, matriz, pos_inicio, pos_fim):
         lista_fechados.add(atual)
         atual.set_fechado()
 
+        print(f"ITERAÇÃO [{iterador:2}]")
         printar_listas(lista_abertos, lista_fechados)
 
     return False
