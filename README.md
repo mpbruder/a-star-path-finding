@@ -9,3 +9,8 @@
 
 ## Exemplo de execução da aplicação:
 ![](chebyshev.png)   
+
+## Como executar?
+$ pip install -r requirements.txt
+
+$ python3 main.py
