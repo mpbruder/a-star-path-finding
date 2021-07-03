@@ -7,5 +7,5 @@
  
  A implementação também permite, além da escolha da heurística, escolher um ponto inicial, um ponto final e os obstáculos que podem ser distribuídos na matriz, permitindo simular diferentes caminhos.
 
-
+## Exemplo de execução da aplicação:
 ![](chebyshev.png)   
